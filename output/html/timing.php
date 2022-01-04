@@ -54,9 +54,14 @@ class QM_Output_Html_Timing extends QM_Output_Html {
 		echo '</tr>';
 		echo '</thead>';
 
+		$total_start_time = 0;
+		$total_end_time = 0;
+		$total_time = 0;
+		$total_memory = 0;
+
 		echo '<tbody>';
 		if ( ! empty( $data['timing'] ) ) {
-			foreach ( $data['timing'] as $row ) {
+			foreach ( $data['timing'] as $i => $row ) {
 
 				$component = $row['component'];
 				$trace = $row['filtered_trace'];
@@ -78,30 +83,49 @@ class QM_Output_Html_Timing extends QM_Output_Html {
 					echo '</ol></td>';
 				}
 
+				$_start_time = number_format_i18n( $row['start_time'], 4 );
+
+				if( $i === 0 ){
+					$total_start_time = $_start_time;
+				}
+
 				printf(
 					'<td class="qm-num">%s</td>',
-					esc_html( number_format_i18n( $row['start_time'], 4 ) )
+					esc_html( $_start_time )
 				);
+
+				$_end_time = number_format_i18n( $row['end_time'], 4 );
+
+				if( (count($data['timing']) - 1) === $i ){
+					$total_end_time = $_end_time;
+				}
 
 				printf(
 					'<td class="qm-num">%s</td>',
 					esc_html( number_format_i18n( $row['end_time'], 4 ) )
 				);
 
+				$_total_time = number_format_i18n( $row['function_time'], 4 );
+				$total_time += $_total_time;
+
 				printf(
 					'<td class="qm-num">%s</td>',
-					esc_html( number_format_i18n( $row['function_time'], 4 ) )
+					esc_html( $_total_time )
 				);
+
+				$_total_memory = number_format_i18n( $row['function_memory'] / 1024 );
+				$total_memory += $_total_memory;
 
 				$mem = sprintf(
 					/* translators: %s: Approximate memory used in kilobytes */
 					__( '~%s kB', 'query-monitor' ),
-					number_format_i18n( $row['function_memory'] / 1024 )
+					$_total_memory
 				);
 				printf(
 					'<td class="qm-num">%s</td>',
 					esc_html( $mem )
 				);
+
 				printf(
 					'<td class="qm-nowrap">%s</td>',
 					esc_html( $component->name )
@@ -175,6 +199,21 @@ class QM_Output_Html_Timing extends QM_Output_Html {
 		}
 
 		echo '</tbody>';
+
+		echo '<tfoot>';
+			echo '<tr>';
+				echo '<td>Total:</td>';
+				echo '<td class="qm-num">' . $total_start_time . '</td>';
+				echo '<td class="qm-num">' . $total_end_time . '</td>';
+				echo '<td class="qm-num">' . $total_time . '</td>';
+				echo '<td class="qm-num">' . sprintf(
+					/* translators: %s: Approximate memory used in kilobytes */
+					__( '~%s kB', 'query-monitor' ),
+					$total_memory
+				) . '</td>';
+				echo '<td>&nbsp;</td>';
+			echo '</tr>';
+		echo '</tfoot>';
 
 		$this->after_tabular_output();
 	}
